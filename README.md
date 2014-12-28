@@ -1,27 +1,32 @@
-#gulp browserify app starter 
+#Gulp + Browserify app starter 
 
 ##CSS
 * autoprefixer
-* sass compilation
+* Sass (with source maps)
 * minification
 
 ##JS
-* browserify
+* Browserify (with source maps)
 * uglfiy
-* jshint
+* JSHint
 
 ##HTML
-* env/production asset paths
+* dev/production asset paths
 
 ##Other
-* clean 
+* error notifications for Sass, JSHint & Browserify
+* clean
 * watch
-* notify
 * BrowserSync
 
 #usage
 1. git clone this repo
 2. rename the cloned directory with your project name
 2. from project directory, run `npm install` to download dependencies
-3. run `gulp` to create or update `dist` directory for development
-4. run `gulp build` to generate production asset paths
+3. run `gulp` to:
+    * create or update `dist` directory for development
+    * start a local server on port :3000 in your default browser
+4. run `gulp build` to switch over to production asset paths (i.e. minified files)
+
+##notes 
+Browserify source maps aren't working on the latest Firefox Developer Edition (36). Use Chrome for source map debugging.

@@ -19,50 +19,71 @@ var gulp = require('gulp'),
 gulp.task('styles', function(){
   return gulp.src('app/css/style.scss')
     .pipe(sourcemaps.init())
-    .pipe(sass())
+    .pipe(sass({
+      onError: function(err){
+        return notify().write(err);
+      }
+    }))
     .pipe(sourcemaps.write())
     .pipe(autoprefix('last 2 versions'))
     .pipe(gulp.dest('dist/css/'))
     .pipe(browsersync.reload({stream:true}))
     .pipe(rename({suffix: '.min'}))
     .pipe(minifycss())
-    .pipe(gulp.dest('dist/css/'))
-    .pipe(notify({message: 'styles compiled!'}));
+    .pipe(gulp.dest('dist/css/'));
 });
 
 gulp.task('jshint', function(){
   return gulp.src('app/js/**/*.js')
     .pipe(jshint())
     .pipe(jshint.reporter('default'))
-    .pipe(notify({message: 'ur js is a-ok'}));
+    .pipe(notify(function(file){
+      if (file.jshint.success) {
+        // Don't show something if success
+        return false;
+      }
+
+      var errors = file.jshint.results.map(function (data) {
+        if (data.error) {
+          return "(" + data.error.line + ':' + data.error.character + ') ' + data.error.reason;
+        }
+      }).join("\n");
+
+      return file.relative + " (" + file.jshint.results.length + " errors)\n" + errors;
+    }));
 });
 
 //compile scripts with browserify
 gulp.task('scripts', function(){
   var browserified = transform(function(filename){
-      var b = browserify(filename);
+      var b = browserify(filename, {debug: true});
       return b.bundle();
   });
 
   return gulp.src(['./app/js/main.js'])
     .pipe(browserified)
+    .on('error', function(err){
+      return notify().write(err.message);
+    })
     .pipe(gulp.dest('./dist/js'))
+    .pipe(browsersync.reload({stream:true}))
     .pipe(rename({suffix: '.min'}))
     .pipe(uglify())
-    .pipe(gulp.dest('./dist/js'))
-    .pipe(notify({message: 'scripts compiled'}));
+    .pipe(gulp.dest('./dist/js'));
 });
 
 gulp.task('html', function(){
   return gulp.src('app/*.html')
     .pipe(preprocess())
+    .pipe(browsersync.reload({stream:true}))
     .pipe(gulp.dest('dist'));
 });
 
 gulp.task('browser-sync', function(){
   browsersync({
+    startPath: '/dist/',
     server: {
-      baseDir: "./dist/"
+      baseDir: "./"
     }
   })
 });
@@ -77,7 +98,7 @@ gulp.task('clean', function(cb) {
     del('dist/*', cb);
 });
 
-//production build task (includes links to minified files)
+//production build task (generates links to minified files)
 gulp.task('build', ['clean'], function(){
   gulp.start('styles', 'jshint', 'scripts', 'html');
   return gulp.src('app/*.html')
